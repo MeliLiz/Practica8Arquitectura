@@ -1,45 +1,32 @@
 .data
-cadena: .asciiz "f1.txt f2.txt"
-espacio: .asciiz " "
-.text 
+cadena : .asciiz "cat str1"
+
+.text
 .globl main
 main:
 	la $s0, cadena
-	la $t5, espacio
-	#li $t4, 0
-	li $t4, 0x10010000
+	li $t8, 0 #Contador
 	
 loop:
+	lb $t0, 0($s0)
+	beq $t0, $zero, fin
+	beq $t0, 0x20, copiar
 	
-	lb $t2, 0($s0) #Cargar el byte actual
-	beq $t2, $zero, fin   # Si es el final de la cadena, terminar
-	beq $t2, 0x20, next   # Si es un espacio, avanzar a la siguiente subcadena
-	
-	sb $t2, 0($t4)
-	
-	
-	
-	addi $t4, $t4, 1
-    	addi $s0, $s0, 1     # Avanzar al siguiente byte
-
-    	j loop               # Volver al inicio del loop
-
-next:
-	li $v0, 4
-	move $a0, $t4
-	syscall
-	addi $t4, $t4, 1
-    	addi $s0, $s0, 1
+	addi $t8, $t8, 1
+	addi $s0, $s0, 1
 	j loop
-	#beq $t9, 0, save_t5
-   	#beq $t9, 1, save_t6
-    	#beq $t9, 2, save_t7
-
-#save t5:
-#save t6:
-#save t7:
-
+	
+copiar:
+	sub $t7, $s0, $t8
+	li $v0,4
+	#move $a0, $t7
+	#syscall
+	addi $t7, $t7, 1
+	add $t7, $t7,$t8
+	move $a0, $t7
+	syscall
+	
+	
 fin:
 	li $v0, 10
 	syscall
-
