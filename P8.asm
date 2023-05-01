@@ -211,18 +211,118 @@ j2:#Imprime joke2
 	
 #Caso de song
 caso_song:
-	li $v0, 33
-	li $a0, 74
-	li $a1, 1000
-	li $a2, 24
-	li $a3, 127
-	syscall
-	li $a0, 74
-	syscall
-	li $a0, 81
-	syscall
-	li $a0, 80
-	syscall
+	#C
+      li $v0, 33      # syscall number 31 (play note) permite que acabe
+      li $a0, 60     # pitch (0-127)(c)
+      li $a2, 1       # instrumento (0-127)
+      li $a1, 1500   # duracon en milisegundos
+      li $a3, 100    # volumen (0-127)
+      syscall         # play note
+    	
+      #C 
+      li $v0, 33      # syscall number 31 (play note)
+      li $a0, 60     # pitch (0-127)(c)
+      li $a2, 1       # instrumento (0-127)
+      li $a1, 1000   # duracon en milisegundos
+      li $a3, 100   # volumen 
+      syscall         # play note
+      
+      #G
+      li $v0, 33      # syscall number 31 (play note) permite que acabe
+      li $a0, 67     # pitch (0-127)(c)
+      li $a2, 1       # instrumento (0-127)
+      li $a1, 1000   # duracon en milisegundos
+      li $a3, 100    # volumen (0-127)
+      syscall         # play note
+    	
+      #G 
+      li $v0, 33      # syscall number 31 (play note)
+      li $a0, 67     # pitch (0-127)(c)
+      li $a2, 1       # instrumento (0-127)
+      li $a1, 1000   # duracon en milisegundos
+      li $a3, 100   # volumen 
+      syscall         # play note
+      
+      #A
+      li $v0, 33      # syscall number 31 (play note) permite que acabe
+      li $a0, 69     # pitch (0-127)(c)
+      li $a2, 1       # instrumento (0-127)
+      li $a1, 1000   # duracon en milisegundos
+      li $a3, 100    # volumen (0-127)
+      syscall         # play note
+    	
+      #A 
+      li $v0, 33      # syscall number 31 (play note)
+      li $a0, 69     # pitch (0-127)(c)
+      li $a2, 1       # instrumento (0-127)
+      li $a1, 1000   # duracon en milisegundos
+      li $a3, 100   # volumen 
+      syscall         # play note
+      
+      #G
+      li $v0, 33      # syscall number 31 (play note) permite que acabe
+      li $a0, 67     # pitch (0-127)(c)
+      li $a2, 1       # instrumento (0-127)
+      li $a1, 1500   # duracon en milisegundos
+      li $a3, 100    # volumen (0-127)
+      syscall         # play note
+      
+      #F
+      li $v0, 33      # syscall number 31 (play note) permite que acabe
+      li $a0, 65     # pitch (0-127)(c)
+      li $a2, 1       # instrumento (0-127)
+      li $a1, 1000   # duracon en milisegundos
+      li $a3, 100    # volumen (0-127)
+      syscall         # play note
+      
+      #F
+      li $v0, 33      # syscall number 31 (play note) permite que acabe
+      li $a0, 65     # pitch (0-127)(c)
+      li $a2, 1       # instrumento (0-127)
+      li $a1, 1000   # duracon en milisegundos
+      li $a3, 100    # volumen (0-127)
+      syscall         # play note
+      
+      #E
+      li $v0, 33      # syscall number 31 (play note) permite que acabe
+      li $a0, 64     # pitch (0-127)(c)
+      li $a2, 1       # instrumento (0-127)
+      li $a1, 1000   # duracon en milisegundos
+      li $a3, 100    # volumen (0-127)
+      syscall         # play note
+      
+      #E
+      li $v0, 33      # syscall number 31 (play note) permite que acabe
+      li $a0, 64     # pitch (0-127)(c)
+      li $a2, 1       # instrumento (0-127)
+      li $a1, 1000   # duracon en milisegundos
+      li $a3, 100    # volumen (0-127)
+      syscall         # play note
+      
+      #D
+      li $v0, 33      # syscall number 31 (play note) permite que acabe
+      li $a0, 62     # pitch (0-127)(c)
+      li $a2, 1       # instrumento (0-127)
+      li $a1, 1000   # duracon en milisegundos
+      li $a3, 100    # volumen (0-127)
+      syscall         # play note
+      
+      #D
+      li $v0, 33      # syscall number 31 (play note) permite que acabe
+      li $a0, 62     # pitch (0-127)(c)
+      li $a2, 1       # instrumento (0-127)
+      li $a1, 1000   # duracon en milisegundos
+      li $a3, 100    # volumen (0-127)
+      syscall         # play note
+      
+      #C
+      li $v0, 33      # syscall number 31 (play note) permite que acabe
+      li $a0, 60     # pitch (0-127)(c)
+      li $a2, 1       # instrumento (0-127)
+      li $a1, 1500   # duracon en milisegundos
+      li $a3, 100    # volumen (0-127)
+      syscall         # play note  
+       
 	j main
 	
 #Caso de rev
@@ -392,9 +492,6 @@ fin:
 	
 	
 caso_exit:
-	la $a0, exit
-	li $v0, 4
-	syscall
 	li $v0, 10
 	syscall
 	
