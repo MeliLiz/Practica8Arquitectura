@@ -1,5 +1,7 @@
 .data
 buffer: .space 80
+bufferArchivo1: .space 1000
+bufferArchivo2: .space 1000
 prompt: .asciiz "\nBienvenido a la terminal, ingresa un comando: "
 disponibles: .asciiz "\nComandos disponibles:\n"
 help: .asciiz "help"
@@ -94,27 +96,25 @@ caso_help1:
 	la $a0, disponibles
 	li $v0, 4
 	syscall
-	la $a0, help_func
+	la $a0, help1
 	li $v0, 4
 	syscall
-	la $a0, harg_func
+	la $a0, joke
 	li $v0, 4
 	syscall
-	la $a0, joke_func
+	la $a0, song
 	li $v0, 4
 	syscall
-	la $a0, song_func
+	la $a0, rev
 	li $v0, 4
 	syscall
-	la $a0, rev_func
+	la $a0, cat
 	li $v0, 4
 	syscall
-	la $a0, cat_func
+	la $a0, exit
 	li $v0, 4
 	syscall
-	la $a0, exit_func
-	li $v0, 4
-	syscall
+	
 	j main
 	
 #Imprimimos la funcion del comando solicitado en los argumentos
@@ -240,6 +240,7 @@ caso_cat:
 	li $t8, 0 	   #Contador del numero de bytes que usa la palabra 1
 	li $t7, 0
 	li $t6, 0x10010000 #inicializamos $t6
+	
 #Funciones auxiliares de cat
 loop:#Contar el numero de bytes que usa la primera cadena y copiarla a $t6
 	lb $t0, 0($s2)#Cargamos el siguiente byte de la cadena en $t0
@@ -266,28 +267,122 @@ copiar: #Copiar la segunda cadena en $t7
 	li $t3, 0x0A
 	jal sustituir
 	
-	li $v0,4
-	move $a0, $t7	#obtenemos la segunda palabra
-	syscall
+	#li $v0,4
+	#move $a0, $t7	#obtenemos la segunda palabra
+	#syscall
 	
 	subi $t8, $t8, 1
 	la $s2, buffer  #Volovemos a poner la direccion de la cadena en $s0
 	addi $s2, $s2, 4
 	sub $t6, $t6, $t8 #Vamos a la direccion de memoria donde comienza la primera palabra
 	
-	move $a0, $t6
-	syscall
-	
-	#li $t8, 0 	#contador
-	#la $t3, nline
-	#jal sustituir
-	#move $a0, $t7	#obtenemos la segunda palabra
+	#move $a0, $t6
 	#syscall
+	
 	
 	#Ahora la primera subcadena esta en $t6 y la segunda en $t7
 	
 	
+	# Abrimos el archivo1 para leer (El que no escribira)
+  	li $v0, 13              # Syscall para abrir un archivo
+  	move $a0, $t7        # Cargamos la direccion del archivo
+  	li $a1, 0               # read mode 0 para leer, 1 para escribir
+  	li $a2, 0               # Permisos por defecto
+  	syscall
+  	move $s0, $v0           # Descriptor del archivo.
+  
+
+  	# Lee los contenidos del archivo.
+  	li $v0, 14              # Syscall para leer un archivo
+  	move $a0, $s0           # Movemos el descriptor al $a0
+  	la $a1, bufferArchivo2          # Carga la direccion del buffer a $a1
+  	li $a2, 1000             # Limite de lectura, lee hasta 256 bytes.
+  	syscall
+  
+  	#Cerramos el archivo
+ 	li $v0, 16              # Syscall para cerrar un archivo.
+  	move $a0, $s0           # Movemos el descriptor del archivo a $a0
+  	syscall
+  
+  
+  	#Abrimos el segundo archivo para leer (el que escribira)
+   	li $v0, 13              # Syscall para abrir un archivo
+   	move $a0, $t6        # Cargamos la direccion del archivo
+   	li $a1, 0               # read mode 0 para leer, 1 para escribir
+   	li $a2, 0               # Permisos por defecto
+   	syscall
+   	move $s1, $v0           # Descriptor del archivo.
+  
+  	# Lee los contenidos del archivo.
+  	li $v0, 14              # Syscall para leer un archivo
+  	move $a0, $s1           # Movemos el descriptor al $a0
+  	la $a1, bufferArchivo1          # Carga la direccion del buffer a $a1
+  	li $a2, 1000             # Limite de lectura, lee hasta 256 bytes.
+  	syscall
+  
+  	# Cerramos el archivo.
+  	li $v0, 16    
+  	move $a0, $s1
+  	syscall
+  
+  
+  	# Abrimos el archivo para escribir
+  	li $v0, 13              # Syscall para abrir un archivo
+  	move $a0, $t6        # Cargamos la direccion del archivo
+  	li $a1, 1               # read mode 0 para leer, 1 para escribir
+  	li $a2, 0               # Permisos por defecto
+  	syscall
+  	move $s2, $v0           # Descriptor del archivo.
+  
+  	#Escribir el archivo
+  	li $v0, 15
+  	move $a0, $s2		#Descriptor
+  	la $a1, bufferArchivo1	#En $a1 ponemos los contenidos del archivo que escribe
+  	la $t5, bufferArchivo2	#En $t5 ponemos el contenido del archivo que se lee
+  
+  	li $t8, 0 #contador
+  
+#Funciones para concatenar lo que esta en el primer buffer con lo del segundo
+concat:
+	lb $t0, 0($a1)	#Cargamos el byte actual de $a1 en $t0
+	beqz $t0, concatena #Si el byte es cero, llegamos al final del archivo
+	
+	addi $a1, $a1, 1	#Aumentamos la direccion de $a1
+	addi $t8, $t8, 1	#Aumentamos el contador
+  	j concat
+
+concatena:
+	lb $t0, ($t5)	#Cargamos el byte actual del archivo 2
+	beqz $t0, ultima	#Si el byte actual es cero, llegamos al final del archivo
+
+	sb $t0, ($a1)	#Guardamos el byte en la direccion de $a1
+	
+	addi $a1, $a1, 1	#Aumentamos la direccion de $a1
+	addi $t8, $t8, 1	#Aumentamos el contador
+	addi $t5, $t5, 1	#Aumentamos la direccion de $t5
+	
+  	j concatena
+  	
+ultima:	
+ 	#Ahora $t8 tiene el numero de bytes totales de los dos archivos
+
+ 	sub $a1, $a1, $t8 #Regresamos a la direccion de memoria donde empezaba originalmente $a1
+  
+ 	move $a2, $t8	    #el numero de bytes que leera seran los que leyo el contador
+  	syscall
+  
+  	#Imprimimos lo que se acaba de escribir en el archivo
+  	li $v0, 4
+  	move $a0, $a1
+  	syscall
+  
+  	# Cerramos el archivo.
+  	li $v0, 16    
+  	move $a0, $s2
+  	syscall
+	
 	j main
+	
 fin:
 	la $a0, warning
 	li $v0, 4

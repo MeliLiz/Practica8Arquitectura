@@ -1,4 +1,4 @@
-#Programa en MIPS que lee un archivo.
+#Programa en MIPS que concatena dos archivos y los imprime
 .data
 archivo: .asciiz "/home/meli/Escritorio/P8/input.txt"  # Nombre del archivo a leer
 archivo1: .asciiz "/home/meli/Escritorio/P8/input1.txt"
@@ -63,11 +63,12 @@ main:
   #Escribir el archivo
   li $v0, 15
   move $a0, $s2		#Descriptor
-  la $a1, buffer
-  la $t5, buffer1
+  la $a1, buffer1
+  la $t5, buffer
   
   li $t8, 0 #contador
   
+#Funciones para concatenar lo que esta en el primer buffer con lo del segundo
 concat:
 	lb $t0, 0($a1)
 	beqz $t0, concatena
@@ -89,26 +90,22 @@ concatena:
   	j concatena
   	
 ultima:	
-  sub $a1, $a1, $t8
+  sub $a1, $a1, $t8 #Regresamos a la direccion de memoria donde empezaba originalmente $a1
   
-  move $a2, $t8
+  move $a2, $t8	    #el numero de bytes que leera seran los que leyo el contador
   syscall
   #la $a1, buffer1
   #syscall
+  
+  #Imprimimos lo que se acaba de escribir en el archivo
+  li $v0, 4
+  move $a0, $a1
+  syscall
   
   # Cerramos el archivo.
   li $v0, 16    
   move $a0, $s2
   syscall
-  
-
-  
-  
-                  
-                                  
-                                                                  
-
-  
 
   # Bai Bai
   li $v0, 10
