@@ -20,6 +20,7 @@ errormsg: .asciiz "El comando ingresado no existe\n"
 joke1: .asciiz "Por que los elefantes no pueden usar computadoras? Porque tienen miedo del raton\n"
 joke2: .asciiz "¿Por que las arañas son buenas en informatica? Porque saben como crear una red\n"
 joke3: .asciiz "¿Que le dice una impresora a otra impresora? ¿Este papel es tuyo o es impresión mia?\n"
+warning: .asciiz "Los argumentos ingresados no son validos"
 
 .text
 .globl main
@@ -88,7 +89,8 @@ main:
 	syscall
 	j main
 	
-caso_help1:#Imprimimos todos los comandos disponibles
+#Imprimimos todos los comandos disponibles
+caso_help1:
 	la $a0, disponibles
 	li $v0, 4
 	syscall
@@ -115,7 +117,9 @@ caso_help1:#Imprimimos todos los comandos disponibles
 	syscall
 	j main
 	
-caso_help:
+#Imprimimos la funcion del comando solicitado en los argumentos
+caso_help: 
+
 	la $s2, buffer	#Cargamos a $s2 la direccion del buffer
 	la $s2, 5($s2)
 	
@@ -149,45 +153,40 @@ caso_help:
 	syscall
 	j main
 	
-	
+#Funciones auxiliares del caso help
 funcHelp:
 	la $a0, help_func
 	li $v0, 4
 	syscall
 	la $a0, harg_func
 	syscall
-	j main
-	
+	j main	
 funcJoke:
 	la $a0, joke_func
 	li $v0, 4
 	syscall
-	j main
-	
+	j main	
 funcSong:la $a0, song_func
 	li $v0, 4
 	syscall
-	j main
-	
+	j main	
 funcRev:
 	la $a0, rev_func
 	li $v0, 4
 	syscall
-	j main
-	
+	j main	
 funcCat:
 	la $a0, cat_func
 	li $v0, 4
 	syscall
 	j main
-	
 funcExit:
 	la $a0, exit_func
 	li $v0, 4
 	syscall
 	j main
-	
-#Funcion joke
+		
+#Caso de joke
 caso_joke:
 	li $v0, 42	#Genera numeros pseudoaleatorios
 	li $a1, 3	#upper bound
@@ -210,6 +209,7 @@ j2:#Imprime joke2
 	syscall
 	j main
 	
+#Caso de song
 caso_song:
 	li $v0, 33
 	li $a0, 74
@@ -225,12 +225,14 @@ caso_song:
 	syscall
 	j main
 	
+#Caso de rev
 caso_rev:
 	la $a0, rev
 	li $v0, 4
 	syscall
 	j main
 	
+#Caso de cat
 caso_cat:
 	la $s2, buffer
 	addi $s2, $s2, 4 #Nos sqaltamos a la direccion de memoria en la que empieza el primer argumento
@@ -238,12 +240,11 @@ caso_cat:
 	li $t8, 0 	   #Contador del numero de bytes que usa la palabra 1
 	li $t7, 0
 	li $t6, 0x10010000 #inicializamos $t6
-	
+#Funciones auxiliares de cat
 loop:#Contar el numero de bytes que usa la primera cadena y copiarla a $t6
-	
 	lb $t0, 0($s2)#Cargamos el siguiente byte de la cadena en $t0
 	
-	beq $t0, $zero, fin #Si el byte es cero, terminamos
+	beq $t0, $zero, fin #Si el byte es cero, hay mas de dos argumentos
 	beq $t0, 0x20, copiar #Si el byte es espacio, ya llegamos al separador
 	
 	sb $t0, ($t6)  #Guardamos el siguiente byte de la cadena (aqui vamos poniendo la palabra 1) en el siguiente byte de $t6
@@ -251,19 +252,21 @@ loop:#Contar el numero de bytes que usa la primera cadena y copiarla a $t6
 	addi $t6, $t6, 1 #Vamos al siguiente byte de $t6 (primera subcadena)
 	addi $t8, $t8, 1 #Aumentamos el contador
 	addi $s2, $s2, 1 #Vamos al siguiente byte de $s0 (cadena)
-	j loop
-	
+	j loop	
 copiar: #Copiar la segunda cadena en $t7
 
 	sb $zero, ($t6)#agregamos el caracter nulo para que ahi se corte t6 (primera subcadena)
 	
 	sub $t7, $s2, $t8 #volver a la direccion donde empieza la cadena (en $t7 guardaremos la segunda subcadena)
 	
-	li $v0,4
-	
 	addi $t8, $t8, 1 #sumarle el byte del espacio al contador
 	add $t7, $t7,$t8 #sumarle los bytes de la primera palabra (para que $t7 empiece en la dirección de memoria donde empieza la segunda palabra)
 	
+	move $t9, $zero
+	li $t3, 0x0A
+	jal sustituir
+	
+	li $v0,4
 	move $a0, $t7	#obtenemos la segunda palabra
 	syscall
 	
@@ -275,12 +278,18 @@ copiar: #Copiar la segunda cadena en $t7
 	move $a0, $t6
 	syscall
 	
+	#li $t8, 0 	#contador
+	#la $t3, nline
+	#jal sustituir
+	#move $a0, $t7	#obtenemos la segunda palabra
+	#syscall
+	
 	#Ahora la primera subcadena esta en $t6 y la segunda en $t7
+	
+	
 	j main
-	
-	
 fin:
-	la $a0, cat_func
+	la $a0, warning
 	li $v0, 4
 	syscall
 	j main
@@ -293,6 +302,27 @@ caso_exit:
 	syscall
 	li $v0, 10
 	syscall
+	
+#Codigo para sustituir en una palabra que esta en $t7 un caracter que esta en $t3 por 0, el contador esta en $t9
+sustituir:
+	
+	lb $t2, ($t7)	#Cargamos en $t2 el byte actual de la cadena
+	beq $t2, $t3, sust
+	
+	beq $t2, $zero, terminaPalabra #Si no tiene el caracter de $t3
+	
+	addi $t7, $t7, 1	#Nos movemos al siguiente byte de la palabra
+	addi $t9, $t9, 1	#Aumentamos el contador
+	j sustituir
+sust:
+	sb $zero, ($t7)
+	sub $t7, $t7, $t9
+	jr $ra
+terminaPalabra:
+	sub $t7, $t7, $t9
+	jr $ra
+
+	
 	
 #Codigo para comparar cadenas
 compara:
