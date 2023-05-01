@@ -85,6 +85,7 @@ main:
 	jal compara
 	beqz $t9, caso_exit
 	
+	
 	#Mensaje de error
 	li $v0, 4
 	la $a0, errormsg
@@ -488,9 +489,9 @@ fin:
 	li $v0, 4
 	syscall
 	j main
+
 	
-	
-	
+#Caso exit	
 caso_exit:
 	li $v0, 10
 	syscall
