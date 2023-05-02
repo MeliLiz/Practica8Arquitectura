@@ -2,6 +2,7 @@
 buffer: .space 80
 bufferArchivo1: .space 1000
 bufferArchivo2: .space 1000
+bufferA: .space 1000
 prompt: .asciiz "\nBienvenido a la terminal, ingresa un comando: "
 disponibles: .asciiz "\nComandos disponibles:\n"
 help: .asciiz "help"
@@ -10,6 +11,7 @@ joke: .asciiz "joke\n"
 song: .asciiz "song\n"
 rev: .asciiz "rev\n"
 cat: .asciiz "cat\n"
+words: .asciiz "words\n"
 exit: .asciiz "exit\n"
 help_func: .asciiz "help: Imprime una lista de los comandos disponibles \n"
 harg_func: .asciiz "help [arg]: Muestra la funcion del comando pasado en el argumento\n"
@@ -17,17 +19,23 @@ joke_func: .asciiz "joke: Muestra un chiste al azar\n"
 song_func: .asciiz "song: genera una cancion\n"
 rev_func: .asciiz "rev: Imprime la reversa de una cadena rev [arg]\n"
 cat_func: .asciiz "cat: concatena dos archivos y los muestra en pantalla cat file file\n"
+words_func: .asciiz "words [direccion de archivo]: Nos dice el numero de palabras en el archivo\n" 
 exit_func: .asciiz "exit: Termina la ejecucion del programa\n"
 errormsg: .asciiz "El comando ingresado no existe\n"
 joke1: .asciiz "Por que los elefantes no pueden usar computadoras? Porque tienen miedo del raton\n"
 joke2: .asciiz "¿Por que las arañas son buenas en informatica? Porque saben como crear una red\n"
 joke3: .asciiz "¿Que le dice una impresora a otra impresora? ¿Este papel es tuyo o es impresión mia?\n"
 warning: .asciiz "Los argumentos ingresados no son validos"
+resPalabras: .asciiz "El numero de palabras en el archivo es: "
+noWords: .asciiz "El archivo ingresado no tiene palabras"
 
 .text
 .globl main
 
 main:
+	sw $zero, bufferArchivo1
+	sw $zero, bufferArchivo2
+	sw $zero, bufferA
 	#imprimimos mensaje para ingresar comando
 	li $v0, 4
 	la $a0, prompt
@@ -69,7 +77,7 @@ main:
 	#la $s2, buffer	#Cargamos a $s2 la direccion del buffer
 	la $s3, rev	#Cargamos a $s3 la direccion de help
 	li $t8, 0 #Contador de bytes
-	li $t7, 2 #Numero de bytes que ocupa la palabra help
+	li $t7, 2 #Numero de bytes que ocupa la palabra rev
 	jal compara1
 	beqz $t9, caso_rev
 	
@@ -79,6 +87,13 @@ main:
 	li $t7, 2 #Numero de bytes que ocupa la palabra cat
 	jal compara1
 	beqz $t9, caso_cat
+	
+	#Caso words
+	la $s3, words	#Cargamos a $s3 la direccion de words
+	li $t8, 0 #Contador de bytes
+	li $t7, 4 #Numero de bytes que ocupa la palabra words
+	jal compara1
+	beqz $t9, caso_words
 	
 	#Caso exit
 	la $s3, exit	#Cargamos a $s3 la direccion de exit
@@ -94,26 +109,22 @@ main:
 	
 #Imprimimos todos los comandos disponibles
 caso_help1:
-	la $a0, disponibles
 	li $v0, 4
+	la $a0, disponibles
 	syscall
 	la $a0, help1
-	li $v0, 4
 	syscall
 	la $a0, joke
-	li $v0, 4
 	syscall
 	la $a0, song
-	li $v0, 4
 	syscall
 	la $a0, rev
-	li $v0, 4
 	syscall
 	la $a0, cat
-	li $v0, 4
+	syscall
+	la $a0, words
 	syscall
 	la $a0, exit
-	li $v0, 4
 	syscall
 	
 	j main
@@ -122,7 +133,7 @@ caso_help1:
 caso_help: 
 
 	la $s2, buffer	#Cargamos a $s2 la direccion del buffer
-	la $s2, 5($s2)
+	la $s2, 5($s2)  #Saltamos a la direccion en donde empieza el argumento
 	
 	la $s3, help1	#Cargamos a $s3 la direccion de help
 	jal compara
@@ -144,6 +155,10 @@ caso_help:
 	jal compara
 	beqz $t9, funcCat
 	
+	la $s3, words	#Cargamos a $s3 la direccion de joke
+	jal compara
+	beqz $t9, funcWords
+	
 	la $s3, exit	#Cargamos a $s3 la direccion de joke
 	jal compara
 	beqz $t9, funcExit
@@ -153,7 +168,6 @@ caso_help:
 	la $a0, errormsg
 	syscall
 	j main
-	
 #Funciones auxiliares del caso help
 funcHelp:
 	la $a0, help_func
@@ -178,6 +192,11 @@ funcRev:
 	j main	
 funcCat:
 	la $a0, cat_func
+	li $v0, 4
+	syscall
+	j main
+funcWords:
+	la $a0, words_func
 	li $v0, 4
 	syscall
 	j main
@@ -218,88 +237,84 @@ caso_song:
       li $a2, 1       # instrumento (0-127)
       li $a1, 1500   # duracon en milisegundos
       li $a3, 100    # volumen (0-127)
-      syscall         # play note
-    	
+      syscall         # play note    	
       #C 
       li $v0, 33      # syscall number 31 (play note)
       li $a0, 60     # pitch (0-127)(c)
       li $a2, 1       # instrumento (0-127)
       li $a1, 1000   # duracon en milisegundos
       li $a3, 100   # volumen 
-      syscall         # play note
-      
+      syscall         # play note      
       #G
       li $v0, 33      # syscall number 31 (play note) permite que acabe
       li $a0, 67     # pitch (0-127)(c)
       li $a2, 1       # instrumento (0-127)
       li $a1, 1000   # duracon en milisegundos
       li $a3, 100    # volumen (0-127)
-      syscall         # play note
-    	
+      syscall         # play note    	
       #G 
       li $v0, 33      # syscall number 31 (play note)
       li $a0, 67     # pitch (0-127)(c)
       li $a2, 1       # instrumento (0-127)
       li $a1, 1000   # duracon en milisegundos
       li $a3, 100   # volumen 
-      syscall         # play note
-      
+      syscall         # play note     
       #A
       li $v0, 33      # syscall number 31 (play note) permite que acabe
       li $a0, 69     # pitch (0-127)(c)
       li $a2, 1       # instrumento (0-127)
       li $a1, 1000   # duracon en milisegundos
       li $a3, 100    # volumen (0-127)
-      syscall         # play note
-    	
+      syscall         # play note   	
       #A 
       li $v0, 33      # syscall number 31 (play note)
       li $a0, 69     # pitch (0-127)(c)
       li $a2, 1       # instrumento (0-127)
       li $a1, 1000   # duracon en milisegundos
       li $a3, 100   # volumen 
-      syscall         # play note
-      
+      syscall         # play note     
       #G
       li $v0, 33      # syscall number 31 (play note) permite que acabe
       li $a0, 67     # pitch (0-127)(c)
       li $a2, 1       # instrumento (0-127)
       li $a1, 1500   # duracon en milisegundos
       li $a3, 100    # volumen (0-127)
-      syscall         # play note
-      
+      syscall         # play note     
       #F
       li $v0, 33      # syscall number 31 (play note) permite que acabe
       li $a0, 65     # pitch (0-127)(c)
       li $a2, 1       # instrumento (0-127)
       li $a1, 1000   # duracon en milisegundos
       li $a3, 100    # volumen (0-127)
-      syscall         # play note
-      
+      syscall         # play note      
       #F
       li $v0, 33      # syscall number 31 (play note) permite que acabe
       li $a0, 65     # pitch (0-127)(c)
       li $a2, 1       # instrumento (0-127)
       li $a1, 1000   # duracon en milisegundos
       li $a3, 100    # volumen (0-127)
-      syscall         # play note
-      
+      syscall         # play note      
       #E
       li $v0, 33      # syscall number 31 (play note) permite que acabe
       li $a0, 64     # pitch (0-127)(c)
       li $a2, 1       # instrumento (0-127)
       li $a1, 1000   # duracon en milisegundos
       li $a3, 100    # volumen (0-127)
-      syscall         # play note
-      
+      syscall         # play note      
       #E
       li $v0, 33      # syscall number 31 (play note) permite que acabe
       li $a0, 64     # pitch (0-127)(c)
       li $a2, 1       # instrumento (0-127)
       li $a1, 1000   # duracon en milisegundos
       li $a3, 100    # volumen (0-127)
-      syscall         # play note
-      
+      syscall         # play note     
+      #D
+      li $v0, 33      # syscall number 31 (play note) permite que acabe
+      li $a0, 62     # pitch (0-127)(c)
+      li $a2, 1       # instrumento (0-127)
+      li $a1, 1000   # duracon en milisegundos
+      li $a3, 100    # volumen (0-127)
+      syscall         # play note     
       #D
       li $v0, 33      # syscall number 31 (play note) permite que acabe
       li $a0, 62     # pitch (0-127)(c)
@@ -307,15 +322,6 @@ caso_song:
       li $a1, 1000   # duracon en milisegundos
       li $a3, 100    # volumen (0-127)
       syscall         # play note
-      
-      #D
-      li $v0, 33      # syscall number 31 (play note) permite que acabe
-      li $a0, 62     # pitch (0-127)(c)
-      li $a2, 1       # instrumento (0-127)
-      li $a1, 1000   # duracon en milisegundos
-      li $a3, 100    # volumen (0-127)
-      syscall         # play note
-      
       #C
       li $v0, 33      # syscall number 31 (play note) permite que acabe
       li $a0, 60     # pitch (0-127)(c)
@@ -364,25 +370,17 @@ copiar: #Copiar la segunda cadena en $t7
 	addi $t8, $t8, 1 #sumarle el byte del espacio al contador
 	add $t7, $t7,$t8 #sumarle los bytes de la primera palabra (para que $t7 empiece en la dirección de memoria donde empieza la segunda palabra)
 	
+	#Quitar el newline d $t7
 	move $t9, $zero
 	li $t3, 0x0A
 	jal sustituir
-	
-	#li $v0,4
-	#move $a0, $t7	#obtenemos la segunda palabra
-	#syscall
 	
 	subi $t8, $t8, 1
 	la $s2, buffer  #Volovemos a poner la direccion de la cadena en $s0
 	addi $s2, $s2, 4
 	sub $t6, $t6, $t8 #Vamos a la direccion de memoria donde comienza la primera palabra
 	
-	#move $a0, $t6
-	#syscall
-	
-	
 	#Ahora la primera subcadena esta en $t6 y la segunda en $t7
-	
 	
 	# Abrimos el archivo1 para leer (El que no escribira)
   	li $v0, 13              # Syscall para abrir un archivo
@@ -392,7 +390,6 @@ copiar: #Copiar la segunda cadena en $t7
   	syscall
   	move $s0, $v0           # Descriptor del archivo.
   
-
   	# Lee los contenidos del archivo.
   	li $v0, 14              # Syscall para leer un archivo
   	move $a0, $s0           # Movemos el descriptor al $a0
@@ -404,7 +401,6 @@ copiar: #Copiar la segunda cadena en $t7
  	li $v0, 16              # Syscall para cerrar un archivo.
   	move $a0, $s0           # Movemos el descriptor del archivo a $a0
   	syscall
-  
   
   	#Abrimos el segundo archivo para leer (el que escribira)
    	li $v0, 13              # Syscall para abrir un archivo
@@ -425,7 +421,6 @@ copiar: #Copiar la segunda cadena en $t7
   	li $v0, 16    
   	move $a0, $s1
   	syscall
-  
   
   	# Abrimos el archivo para escribir
   	li $v0, 13              # Syscall para abrir un archivo
@@ -451,7 +446,6 @@ concat:
 	addi $a1, $a1, 1	#Aumentamos la direccion de $a1
 	addi $t8, $t8, 1	#Aumentamos el contador
   	j concat
-
 concatena:
 	lb $t0, ($t5)	#Cargamos el byte actual del archivo 2
 	beqz $t0, ultima	#Si el byte actual es cero, llegamos al final del archivo
@@ -462,8 +456,7 @@ concatena:
 	addi $t8, $t8, 1	#Aumentamos el contador
 	addi $t5, $t5, 1	#Aumentamos la direccion de $t5
 	
-  	j concatena
-  	
+  	j concatena	
 ultima:	
  	#Ahora $t8 tiene el numero de bytes totales de los dos archivos
 
@@ -483,13 +476,72 @@ ultima:
   	syscall
 	
 	j main
-	
-fin:
+fin: #Si en cat se pasan menos de dos argumentos, se imprime un warning
 	la $a0, warning
 	li $v0, 4
 	syscall
 	j main
 
+#Caso words
+caso_words:
+	la $s2, buffer	#Cargamos lo del usuario en $s2
+	addi $s2, $s2, 6 #Nos saltamos a la direccion de memoria donde empieza el primer argumento
+	move $t7, $s2	#En $t7 ponemos el argumento, que sera la direccion del archivo
+	
+	#Preparamos los argumentos para llamar a jal
+	li $t3, 0x0A
+	move $t9, $zero
+	jal sustituir #Nos regresa la cadena sin el newline
+	
+	#Abrimos el archivo
+	li $v0, 13              # Syscall para abrir un archivo
+        move $a0, $t7        # Cargamos la direccion del archivo
+  	li $a1, 0               # read mode 0 para leer, 1 para escribir
+  	li $a2, 0               # Permisos por defecto
+  	syscall
+  	move $s0, $v0           # Descriptor del archivo.
+  	
+  	## Lee los contenidos del archivo.
+  	li $v0, 14              # Syscall para leer un archivo
+  	move $a0, $s0           # Movemos el descriptor al $a0
+  	la $a1, bufferA          # Carga la direccion del buffer a $a1
+  	li $a2, 1000             # Limite de lectura, lee hasta 256 bytes.
+  	syscall
+  	
+  	#Cerramos el archivo
+  	li $v0, 16              # Syscall para cerrar un archivo.
+  	move $a0, $s0           # Movemos el descriptor del archivo a $a0
+  	syscall
+  	
+  	#El contenido del archivo ahora esta en $a1
+  	li $t8, 0 #Contador de palabras
+cuentaPalabras:
+	lb $t0, ($a1)
+	
+	beqz $t0, numPalabras	#Si ya llegamos al final del archivo
+	beq $t0, 0x20, aumentaContador	#espacio
+	
+	addi $a1, $a1,1
+	j cuentaPalabras
+aumentaContador:
+	addi $t8, $t8, 1 #Aumentamos el contador
+	addi $a1, $a1,1	#Aumentamos en un byte la direccion de la cadena
+	j cuentaPalabras
+numPalabras:#Imprimimos el numero de palabras en el archivo
+	beqz $t8, sinPalabras #Si el numero de palabras es 0
+	li $v0, 4
+	la $a0, resPalabras
+	syscall
+	addi $t8, $t8, 1 #Aumentamos el contador para que se tome en cuenta la ultima palabra que termina en newline
+	li $v0, 1
+	move $a0, $t8 
+	syscall
+	j main
+sinPalabras:
+	li $v0, 4
+	la $a0, noWords
+	syscall
+	j main
 	
 #Caso exit	
 caso_exit:
@@ -498,7 +550,6 @@ caso_exit:
 	
 #Codigo para sustituir en una palabra que esta en $t7 un caracter que esta en $t3 por 0, el contador esta en $t9
 sustituir:
-	
 	lb $t2, ($t7)	#Cargamos en $t2 el byte actual de la cadena
 	beq $t2, $t3, sust
 	
@@ -515,8 +566,6 @@ terminaPalabra:
 	sub $t7, $t7, $t9
 	jr $ra
 
-	
-	
 #Codigo para comparar cadenas
 compara:
 	lb $t2, ($s2)
@@ -545,11 +594,9 @@ compara1:
 	addi $s3, $s3, 1
 	j compara1
 	
-	
 diferentes:
 	li $t9, 1 #En t9 ponemos 1
 	jr $ra
-	
 	
 iguales:
 	move $t9, $zero #En t9 ponemos 0
