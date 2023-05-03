@@ -12,6 +12,7 @@ song: .asciiz "song\n"
 rev: .asciiz "rev\n"
 cat: .asciiz "cat\n"
 words: .asciiz "words\n"
+pian: .asciiz "pian\n"
 exit: .asciiz "exit\n"
 help_func: .asciiz "help: Imprime una lista de los comandos disponibles \n"
 harg_func: .asciiz "help [arg]: Muestra la funcion del comando pasado en el argumento\n"
@@ -29,6 +30,8 @@ warning: .asciiz "Los argumentos ingresados no son validos"
 resPalabras: .asciiz "El numero de palabras en el archivo es: "
 noWords: .asciiz "El archivo ingresado no tiene palabras"
 pedirLinea: .asciiz "Ingrese la linea a revertir: "
+errorMensaje: .asciiz "\n Ingresaste una opcion no valida"
+helpPianM: .asciiz "Dependiendo de las claves que ingresas en pantalla toca una cancion. \n Las claves son D0,D1,E0,E1,F1,G0,G1,A0,A1,B0,B1,C1. Por ejemplo: D1D1G1G1A1A1G1 es estrellita.\n" 
 
 .text
 .globl main
@@ -105,6 +108,14 @@ main:
 	jal compara1
 	beqz $t9, caso_words
 	
+	#Caso pian
+	la $s3, pian	#Cargamos a $s3 la direccion de words
+	li $t8, 0 #Contador de bytes
+	li $t7, 3 #Numero de bytes que ocupa la palabra words
+	la $s2, buffer	#Cargamos a $s2 la direccion del buffer
+	jal compara1
+	beqz $t9, aux2
+	
 	#Caso exit
 	la $s3, exit	#Cargamos a $s3 la direccion de exit
 	jal compara
@@ -134,8 +145,11 @@ caso_help1:
 	syscall
 	la $a0, words
 	syscall
+	la $a0, pian
+	syscall
 	la $a0, exit
 	syscall
+	
 	
 	j main
 	
@@ -168,6 +182,10 @@ caso_help:
 	la $s3, words	#Cargamos a $s3 la direccion de joke
 	jal compara
 	beqz $t9, funcWords
+	
+	la $s3, pian
+	jal compara
+	beqz $t9, funcPian
 	
 	la $s3, exit	#Cargamos a $s3 la direccion de joke
 	jal compara
@@ -207,6 +225,11 @@ funcCat:
 	j main
 funcWords:
 	la $a0, words_func
+	li $v0, 4
+	syscall
+	j main
+funcPian:
+	la $a0, helpPianM
 	li $v0, 4
 	syscall
 	j main
@@ -592,6 +615,10 @@ sinPalabras:
 	syscall
 	j main
 	
+#Caso pian
+caso_pian:
+	
+	
 #Caso exit	
 caso_exit:
 	li $v0, 10
@@ -614,6 +641,113 @@ sust:
 terminaPalabra:
 	sub $t7, $t7, $t9
 	jr $ra
+	
+	
+aux2:
+        #D0D1E0E1F1G0G1A0A1B0B1C1 b es 0, nada es 1 
+        #D1D1G1G1A1A1G1 estrellita
+        
+        la $a0, buffer #tomamos la cadena musical
+        #Quitamos el newline
+        li $t3, 0x0A
+        move $t7, $a0
+        li $t9, 0
+        jal sustituir
+        addi $t0, $t7, 5 #En t0 ponemos la cadena musical
+
+leerNotas:
+        lb $s1,  ($t0)#pone el bit de la letra en el lugar $s7 en $s1
+        lb $s2, 1($t0) #pone el bit del numero en el luhear $s6 en $s2
+        xor $s4, $s2,48 #compara si el bit es 0 si son iguales $s4 es 0
+        
+        xor $s5, $s1,68 #compara si la letra es igual a D si son iguales $s4 es 0
+        li $t1, 61 #pone el valor de Db en t1
+        beq $s5,$s4, reproduceNota #si en efecto es Db reproduce nota
+        
+        xor $s5, $s1,69 #compara si la letra es igual a E si son iguales $s4 es 0
+        li $t1, 63 #pone el valor de Eb en t1
+        beq $s5,$s4, reproduceNota #si en efecto es Db reproduce nota
+        
+        xor $s5, $s1,71 #compara si la letra es igual a G si son iguales $s4 es 0
+        li $t1, 66 #pone el valor de Gb en t1
+        beq $s5,$s4, reproduceNota #si en efecto es Db reproduce nota
+        
+        xor $s5, $s1,65 #compara si la letra es igual a A si son iguales $s4 es 0
+        li $t1, 68 #pone el valor de Ab en t1
+        beq $s5,$s4, reproduceNota #si en efecto es Db reproduce nota
+        
+        xor $s5, $s1,66 #compara si la letra es igual a B si son iguales $s4 es 0
+        li $t1, 70 #pone el valor de Bb en t1
+        beq $s5,$s4, reproduceNota #si en efecto es Db reproduce nota     
+        
+        xor $s4, $s2,49 #compara si el bit es 1 si son iguales $s4 es 0
+        
+        xor $s5, $s1,68 #compara si la letra es igual a D si son iguales $s4 es 0
+        li $t1, 62 #pone el valor de D en t1
+        beq $s5,$s4, reproduceNota #si en efecto es Db reproduce nota
+        
+        xor $s5, $s1,69 #compara si la letra es igual a E si son iguales $s4 es 0
+        li $t1, 64 #pone el valor de E en t1
+        beq $s5,$s4, reproduceNota #si en efecto es Db reproduce nota
+        
+        xor $s5, $s1,70 #compara si la letra es igual a F si son iguales $s4 es 0
+        li $t1, 65 #pone el valor de F en t1
+        beq $s5,$s4, reproduceNota #si en efecto es Db reproduce nota
+        
+        xor $s5, $s1,71 #compara si la letra es igual a G si son iguales $s4 es 0
+        li $t1, 67 #pone el valor de G en t1
+        beq $s5,$s4, reproduceNota #si en efecto es Db reproduce nota
+        
+        xor $s5, $s1,65 #compara si la letra es igual a A si son iguales $s4 es 0
+        li $t1, 69 #pone el valor de A en t1
+        beq $s5,$s4, reproduceNota #si en efecto es Db reproduce nota
+        
+        xor $s5, $s1,66 #compara si la letra es igual a B si son iguales $s4 es 0
+        li $t1, 71 #pone el valor de B en t1
+        beq $s5,$s4, reproduceNota #si en efecto es Db reproduce nota
+        
+        xor $s5, $s1,67 #compara si la letra es igual a C si son iguales $s4 es 0
+        li $t1, 72 #pone el valor de C en t1
+        beq $s5,$s4, reproduceNota #si en efecto es Db reproduce nota         
+       
+        beq $s1, 0, main
+        beq $s6, 80, main
+        
+        jal error
+        
+reproduceNota:	        
+           
+        li $v0, 33      # syscall number 31 (play note) permite que acabe
+        move $a0, $t1   #lo movemos a $a0 para setear el pitch  
+        li $a2, 0    # instrumento (0-127) 
+        li $a1, 1500   # duracon en milisegundos
+        li $a3, 100    # volumen (0-127)
+        syscall         # play note
+        
+        li $s5, 0
+        li $s4, 0
+        #addi $s7, $s7, 2
+        #addi $s6, $s6, 2
+        addi $t0, $t0, 2
+        
+	j leerNotas 
+	
+  error: 
+        li $v0,4
+        la $a0, errorMensaje
+        syscall
+        j main	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	
 	
 #Codigo para leer un archivo que esta en $t7, regresa el contenido del archivo en $a1
