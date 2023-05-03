@@ -28,6 +28,7 @@ joke3: .asciiz "¿Que le dice una impresora a otra impresora? ¿Este papel es tu
 warning: .asciiz "Los argumentos ingresados no son validos"
 resPalabras: .asciiz "El numero de palabras en el archivo es: "
 noWords: .asciiz "El archivo ingresado no tiene palabras"
+pedirLinea: .asciiz "Ingrese la linea a revertir: "
 
 .text
 .globl main
@@ -73,18 +74,26 @@ main:
 	jal compara
 	beqz $t9, caso_song
 	
-	#Caso rev
+	#Caso rev arg
+	la $s3, rev
+	jal compara
+	beqz $t9, caso_rev
+	
+	#Caso rev arg
 	#la $s2, buffer	#Cargamos a $s2 la direccion del buffer
 	la $s3, rev	#Cargamos a $s3 la direccion de help
 	li $t8, 0 #Contador de bytes
 	li $t7, 2 #Numero de bytes que ocupa la palabra rev
+	la $s2, buffer	#Cargamos a $s2 la direccion del buffer
 	jal compara1
-	beqz $t9, caso_rev
+	beqz $t9, caso_revArg
+	
 	
 	#Caso cat
 	la $s3, cat	#Cargamos a $s3 la direccion de cat
 	li $t8, 0 #Contador de bytes
 	li $t7, 2 #Numero de bytes que ocupa la palabra cat
+	la $s2, buffer	#Cargamos a $s2 la direccion del buffer
 	jal compara1
 	beqz $t9, caso_cat
 	
@@ -92,6 +101,7 @@ main:
 	la $s3, words	#Cargamos a $s3 la direccion de words
 	li $t8, 0 #Contador de bytes
 	li $t7, 4 #Numero de bytes que ocupa la palabra words
+	la $s2, buffer	#Cargamos a $s2 la direccion del buffer
 	jal compara1
 	beqz $t9, caso_words
 	
@@ -334,10 +344,85 @@ caso_song:
 	
 #Caso de rev
 caso_rev:
-	la $a0, rev
+
+	#imprimimos mensaje para ingresar comando
 	li $v0, 4
+	la $a0, pedirLinea
 	syscall
+	
+	sw $zero, buffer
+	
+	#Leer string del usuario
+	li $v0, 8	#Leer string del usuario
+	la $a0, buffer	#Apartar en $a0 un buffer de tamaño 80
+	li $a1, 81	#Tamaño maximo
+	syscall		
+	
+	la $s2, buffer	#Cargamos a $s2 la direccion del buffer
+	li $t8, 1	#Constador
+	
+recorre: #bucle para llegar hasta el final de la cadena que está en $s2
+	lb $t0, ($s2)
+	beq $t0, 0x0A, invierte
+	beq $t0, 0, invierte
+	
+	addi $t8, $t8, 1 #Aumentamos el contador
+	addi $s2, $s2, 1 #Vamos al siguiente byte de la cadena
+	
+	j recorre
+	
+invierte:
+	subi $s2, $s2, 1
+	sb $zero, 1($s2)
+	subi $t8, $t8, 1
+	beqz $t8, invertida
+	li $v0, 4
+	move $a0, $s2
+	syscall
+	j invierte
+
+invertida: #Ponemos los registrios en 0 y volvemos a main
+	li $s2, 0
+	li $t8, 0
+	li $a0, 0
 	j main
+	
+#Caso re rev arg
+caso_revArg:
+	la $s2 buffer #Cargamos el comando
+	addi $s2, $s2, 4 #Ahora $s2 tiene el argumento
+	move $t7, $s2	#En $t7 ponemos el argumento, que sera la direccion del archivo
+	
+	#Preparamos los argumentos para llamar a sustituir
+	li $t3, 0x0A
+	move $t9, $zero
+	jal sustituir #Nos regresa la cadena en $t7 sin el newline
+	
+	#Abrimos el archivo
+	li $v0, 13              # Syscall para abrir un archivo
+        move $a0, $t7        # Cargamos la direccion del archivo
+  	li $a1, 0               # read mode
+  	li $a2, 0               # Permisos por defecto
+  	syscall
+  	move $s0, $v0           # Descriptor del archivo.
+  	
+  	## Lee los contenidos del archivo.
+  	li $v0, 14              # Syscall para leer un archivo
+  	move $a0, $s0           # Movemos el descriptor al $a0
+  	la $a1, bufferA          # Carga la direccion del buffer a $a1
+  	li $a2, 1000             # Limite de lectura, lee hasta 256 bytes.
+  	syscall
+  	
+  	#Cerramos el archivo
+  	li $v0, 16              # Syscall para cerrar un archivo.
+  	move $a0, $s0           # Movemos el descriptor del archivo a $a0
+  	syscall
+  	
+  	#El contenido del archivo ahora esta en $a1
+  	#Preparamos los argumentos para llamar a recorre
+	move $s2, $a1 
+	li $t8, 1
+	j recorre
 	
 #Caso de cat
 caso_cat:
