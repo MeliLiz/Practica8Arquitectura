@@ -398,25 +398,7 @@ caso_revArg:
 	move $t9, $zero
 	jal sustituir #Nos regresa la cadena en $t7 sin el newline
 	
-	#Abrimos el archivo
-	li $v0, 13              # Syscall para abrir un archivo
-        move $a0, $t7        # Cargamos la direccion del archivo
-  	li $a1, 0               # read mode
-  	li $a2, 0               # Permisos por defecto
-  	syscall
-  	move $s0, $v0           # Descriptor del archivo.
-  	
-  	## Lee los contenidos del archivo.
-  	li $v0, 14              # Syscall para leer un archivo
-  	move $a0, $s0           # Movemos el descriptor al $a0
-  	la $a1, bufferA          # Carga la direccion del buffer a $a1
-  	li $a2, 1000             # Limite de lectura, lee hasta 256 bytes.
-  	syscall
-  	
-  	#Cerramos el archivo
-  	li $v0, 16              # Syscall para cerrar un archivo.
-  	move $a0, $s0           # Movemos el descriptor del archivo a $a0
-  	syscall
+	jal leeArchivo
   	
   	#El contenido del archivo ahora esta en $a1
   	#Preparamos los argumentos para llamar a recorre
@@ -578,25 +560,7 @@ caso_words:
 	move $t9, $zero
 	jal sustituir #Nos regresa la cadena sin el newline
 	
-	#Abrimos el archivo
-	li $v0, 13              # Syscall para abrir un archivo
-        move $a0, $t7        # Cargamos la direccion del archivo
-  	li $a1, 0               # read mode 0 para leer, 1 para escribir
-  	li $a2, 0               # Permisos por defecto
-  	syscall
-  	move $s0, $v0           # Descriptor del archivo.
-  	
-  	## Lee los contenidos del archivo.
-  	li $v0, 14              # Syscall para leer un archivo
-  	move $a0, $s0           # Movemos el descriptor al $a0
-  	la $a1, bufferA          # Carga la direccion del buffer a $a1
-  	li $a2, 1000             # Limite de lectura, lee hasta 256 bytes.
-  	syscall
-  	
-  	#Cerramos el archivo
-  	li $v0, 16              # Syscall para cerrar un archivo.
-  	move $a0, $s0           # Movemos el descriptor del archivo a $a0
-  	syscall
+	jal leeArchivo
   	
   	#El contenido del archivo ahora esta en $a1
   	li $t8, 0 #Contador de palabras
@@ -650,6 +614,31 @@ sust:
 terminaPalabra:
 	sub $t7, $t7, $t9
 	jr $ra
+	
+	
+#Codigo para leer un archivo que esta en $t7, regresa el contenido del archivo en $a1
+leeArchivo:
+	#Abrimos el archivo
+	li $v0, 13              # Syscall para abrir un archivo
+        move $a0, $t7        # Cargamos la direccion del archivo
+  	li $a1, 0               # read mode
+  	li $a2, 0               # Permisos por defecto
+  	syscall
+  	move $s0, $v0           # Descriptor del archivo.
+  	
+  	## Lee los contenidos del archivo.
+  	li $v0, 14              # Syscall para leer un archivo
+  	move $a0, $s0           # Movemos el descriptor al $a0
+  	la $a1, bufferA          # Carga la direccion del buffer a $a1
+  	li $a2, 1000             # Limite de lectura, lee hasta 256 bytes.
+  	syscall
+  	
+  	#Cerramos el archivo
+  	li $v0, 16              # Syscall para cerrar un archivo.
+  	move $a0, $s0           # Movemos el descriptor del archivo a $a0
+  	syscall
+  	
+  	jr $ra
 
 #Codigo para comparar cadenas
 compara:
@@ -663,7 +652,7 @@ compara:
 	addi $s3, $s3, 1
 	j compara
 	
-#Codigo para comparar comandos con argumentos
+#Codigo para comparar comandos con un argumento
 compara1:
 	lb $t2, 0($s2)
 	lb $t3, 0($s3)
