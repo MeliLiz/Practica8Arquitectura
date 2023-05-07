@@ -38,9 +38,14 @@ archivo: .asciiz "input1.txt"
 .globl main
 
 main:
-	sw $zero, bufferArchivo1
-	sw $zero, bufferArchivo2
+	#sw $zero, bufferArchivo1
+	#sw $zero, bufferArchivo2
 	sw $zero, bufferA
+	li $t8, 0
+	la $a3, bufferArchivo1
+	jal limpiaBuffer
+	la $a3, bufferArchivo2
+	jal limpiaBuffer
 	
 	#imprimimos mensaje para ingresar comando
 	li $v0, 4
@@ -819,3 +824,17 @@ diferentes:
 iguales:
 	move $t9, $zero #En t9 ponemos 0
 	jr $ra	
+
+limpiaBuffer: #Buffer en $a3, contador en $t8
+	lb $t0, ($a3)
+	beqz $t0, listo
+	sb $zero, ($a3)
+	addi $a3, $a3, 1
+	addi $t8, $t8, 1
+	j limpiaBuffer
+	
+listo:
+	li $t8,0
+	li $t0,0
+	jr $ra
+	
