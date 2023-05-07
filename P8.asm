@@ -41,6 +41,7 @@ main:
 	sw $zero, bufferArchivo1
 	sw $zero, bufferArchivo2
 	sw $zero, bufferA
+	
 	#imprimimos mensaje para ingresar comando
 	li $v0, 4
 	la $a0, prompt
@@ -485,7 +486,7 @@ leeEscribe:
   	li $v0, 14              # Syscall para leer un archivo
   	move $a0, $s0           # Movemos el descriptor al $a0
   	la $a1, bufferArchivo2          # Carga la direccion del buffer a $a1
-  	li $a2, 1000             # Limite de lectura, lee hasta 256 bytes.
+  	li $a2, 1000             # Limite de lectura, lee hasta 1000 bytes.
   	syscall
   
   	#Cerramos el archivo
@@ -505,7 +506,7 @@ leeEscribe:
   	li $v0, 14              # Syscall para leer un archivo
   	move $a0, $s1           # Movemos el descriptor al $a0
   	la $a1, bufferArchivo1          # Carga la direccion del buffer a $a1
-  	li $a2, 1000             # Limite de lectura, lee hasta 256 bytes.
+  	li $a2, 1000             # Limite de lectura, lee hasta 1000 bytes.
   	syscall
   
   	# Cerramos el archivo.
@@ -528,6 +529,7 @@ leeEscribe:
   	move $a0, $s2		#Descriptor
   	la $a1, bufferArchivo1	#En $a1 ponemos los contenidos del archivo que escribe
   	la $t5, bufferArchivo2	#En $t5 ponemos el contenido del archivo que se lee
+  	
   
   	li $t8, 0 #contador
   
@@ -662,7 +664,7 @@ terminaPalabra:
 	sub $t7, $t7, $t9
 	jr $ra
 	
-	
+#Caso de pian	
 aux2:
         #D0D1E0E1F1G0G1A0A1B0B1C1 b es 0, nada es 1 
         #D1D1G1G1A1A1G1 estrellita
@@ -816,6 +818,4 @@ diferentes:
 	
 iguales:
 	move $t9, $zero #En t9 ponemos 0
-	jr $ra
-	
-	
+	jr $ra	
