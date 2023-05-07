@@ -438,7 +438,6 @@ caso_cat:
 	li $t8, 0 	   #Contador del numero de bytes que usa la palabra 1
 	li $t7, 0
 	li $t6, 0x10010000 #inicializamos $t6
-	#move $t6, $zero
 	
 #Funciones auxiliares de cat
 loop:#Contar el numero de bytes que usa la primera cadena y copiarla a $t6
