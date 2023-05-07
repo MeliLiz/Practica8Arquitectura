@@ -18,20 +18,21 @@ help_func: .asciiz "help: Imprime una lista de los comandos disponibles \n"
 harg_func: .asciiz "help [arg]: Muestra la funcion del comando pasado en el argumento\n"
 joke_func: .asciiz "joke: Muestra un chiste al azar\n"
 song_func: .asciiz "song: genera una cancion\n"
-rev_func: .asciiz "rev: Imprime la reversa de una cadena rev [arg]\n"
+rev_func: .asciiz "rev: Imprime la reversa de una cadena\nrev [direccionArchivo]: Imprime el contenido del archivo en reversa"
 cat_func: .asciiz "cat: concatena dos archivos y los muestra en pantalla cat file file\n"
 words_func: .asciiz "words [direccion de archivo]: Nos dice el numero de palabras en el archivo\n" 
 exit_func: .asciiz "exit: Termina la ejecucion del programa\n"
 errormsg: .asciiz "El comando ingresado no existe\n"
-joke1: .asciiz "Por que los elefantes no pueden usar computadoras? Porque tienen miedo del raton\n"
-joke2: .asciiz "¿Por que las arañas son buenas en informatica? Porque saben como crear una red\n"
-joke3: .asciiz "¿Que le dice una impresora a otra impresora? ¿Este papel es tuyo o es impresión mia?\n"
+joke1: .asciiz "\n¿Que hace una vaca en una mina? Vacaminando\n"
+joke2: .asciiz "\nEl chiste mas malo es el que le pega a los otros chistecitos."
+joke3: .asciiz "\n¿Que le dice una impresora a otra impresora? ¿Este papel es tuyo o es impresión mia?\n"
 warning: .asciiz "Los argumentos ingresados no son validos"
 resPalabras: .asciiz "El numero de palabras en el archivo es: "
 noWords: .asciiz "El archivo ingresado no tiene palabras"
 pedirLinea: .asciiz "Ingrese la linea a revertir: "
 errorMensaje: .asciiz "\n Ingresaste una opcion no valida"
 helpPianM: .asciiz "Dependiendo de las claves que ingresas en pantalla toca una cancion. \n Las claves son D0,D1,E0,E1,F1,G0,G1,A0,A1,B0,B1,C1. Por ejemplo: D1D1G1G1A1A1G1 es estrellita.\n" 
+archivo: .asciiz "input1.txt"
 
 .text
 .globl main
@@ -437,6 +438,7 @@ caso_cat:
 	li $t8, 0 	   #Contador del numero de bytes que usa la palabra 1
 	li $t7, 0
 	li $t6, 0x10010000 #inicializamos $t6
+	#move $t6, $zero
 	
 #Funciones auxiliares de cat
 loop:#Contar el numero de bytes que usa la primera cadena y copiarla a $t6
@@ -466,12 +468,12 @@ copiar: #Copiar la segunda cadena en $t7
 	jal sustituir
 	
 	subi $t8, $t8, 1
-	la $s2, buffer  #Volovemos a poner la direccion de la cadena en $s0
+	la $s2, buffer  #Volovemos a poner la direccion de la cadena en $s2
 	addi $s2, $s2, 4
 	sub $t6, $t6, $t8 #Vamos a la direccion de memoria donde comienza la primera palabra
 	
 	#Ahora la primera subcadena esta en $t6 y la segunda en $t7
-	
+leeEscribe:	
 	# Abrimos el archivo1 para leer (El que no escribira)
   	li $v0, 13              # Syscall para abrir un archivo
   	move $a0, $t7        # Cargamos la direccion del archivo
@@ -519,6 +521,8 @@ copiar: #Copiar la segunda cadena en $t7
   	li $a2, 0               # Permisos por defecto
   	syscall
   	move $s2, $v0           # Descriptor del archivo.
+  	
+  	#En a1 tenemos el contenido del archivo en el que se va a escribir
   
   	#Escribir el archivo
   	li $v0, 15
@@ -536,8 +540,9 @@ concat:
 	addi $a1, $a1, 1	#Aumentamos la direccion de $a1
 	addi $t8, $t8, 1	#Aumentamos el contador
   	j concat
+  	
 concatena:
-	lb $t0, ($t5)	#Cargamos el byte actual del archivo 2
+	lb $t0, ($t5)	#Cargamos el byte actual del archivo 2 en t0
 	beqz $t0, ultima	#Si el byte actual es cero, llegamos al final del archivo
 
 	sb $t0, ($a1)	#Guardamos el byte en la direccion de $a1
@@ -564,13 +569,31 @@ ultima:
   	li $v0, 16    
   	move $a0, $s2
   	syscall
+  	
+  	move $a1, $zero
+  	move $s2, $zero
+  	move $t8, $zero
+  	move $t7, $zero
+  	move $t6, $zero
+  	move $t0, $zero
+  	move $t5, $zero
+  	move $a0, $zero
+  	move $a2, $zero
 	
 	j main
 fin: #Si en cat se pasan menos de dos argumentos, se imprime un warning
-	la $a0, warning
-	li $v0, 4
-	syscall
-	j main
+
+	subi $t6, $t6, 1
+	sb $zero, ($t6)#agregamos el caracter nulo para que ahi se corte t6 (primer argumento)
+	
+	la $s2, buffer  #Volvemos a poner la direccion de la cadena en $s2
+	sub $t6, $t6, $t8 #Vamos a la direccion de memoria donde comienza la primera palabra
+	addi $t6, $t6, 1
+	subi $t8, $t8, 1
+	
+	la $t7, archivo
+
+	j leeEscribe
 
 #Caso words
 caso_words:
@@ -614,9 +637,7 @@ sinPalabras:
 	la $a0, noWords
 	syscall
 	j main
-	
-#Caso pian
-caso_pian:
+
 	
 	
 #Caso exit	
@@ -737,18 +758,6 @@ reproduceNota:
         la $a0, errorMensaje
         syscall
         j main	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
 	
 #Codigo para leer un archivo que esta en $t7, regresa el contenido del archivo en $a1
 leeArchivo:
